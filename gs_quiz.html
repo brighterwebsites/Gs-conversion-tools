@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Perfect Stable - Guerilla Steel Quiz</title>
+    <meta name="description" content="Answer 6 quick questions to get your personalized stable recommendation with pricing.">
+    <!-- GA4 Tracking for iframe -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-STTN89KPPT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-3EHPSXNZV2');
+    </script>    
+<style>
+        /* ========================================
+           GUERILLA STEEL - STABLE FINDER QUIZ V2
+           Complete standalone version
+           Mobile-optimized (350px+)
+           ======================================== */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --gs-red: #c41e3a;
+            --gs-red-hover: #a01730;
+            --gs-dark: #1a1a1a;
+            --gs-gray: #4a4a4a;
+            --gs-light-gray: #f5f5f5;
+            --gs-border: #e0e0e0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--gs-dark);
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+        
+        .gs-quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* Header */
+        .gs-quiz-header {
+            background: var(--gs-dark);
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .gs-quiz-header h1 {
+            font-size: clamp(22px, 5vw, 32px);
+            margin-bottom: 0px;
+            font-weight: 700;
+        }
+        
+        .gs-quiz-header p {
+            font-size: clamp(14px, 3.5vw, 16px);
+            opacity: 0.9;
+        }
+        
+        /* Progress Bar */
+        .gs-progress-container {
+            background: var(--gs-light-gray);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gs-border);
+        }
+        
+        .gs-progress-label {
+            font-size: 13px;
+            color: var(--gs-gray);
+            margin-bottom: 8px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .gs-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .gs-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gs-red), var(--gs-red-hover));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        /* Questions */
+        .gs-questions-container {
+            padding: 10px 20px;
+            min-height: 450px;
+        }
+        
+        .gs-question {
+            display: none;
+        }
+        
+        .gs-question.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .gs-question-title {
+            font-size: clamp(20px, 4.5vw, 26px);
+            font-weight: 700;
+            margin-bottom: 0px;
+            color: var(--gs-dark);
+        }
+        
+        .gs-question-subtitle {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: var(--gs-gray);
+            margin-bottom: 15px;
+        }
+        
+        .gs-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        
+        .gs-option {
+            background: #fff;
+            border: 2px solid var(--gs-border);
+            border-radius: 12px;
+            padding: 5px 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: clamp(15px, 3.5vw, 16px);
+            min-height: 60px;
+        }
+        
+        .gs-option:hover {
+            border-color: var(--gs-red);
+            background: #fff5f7;
+            transform: translateX(4px);
+        }
+        
+        .gs-option.selected {
+            border-color: var(--gs-red);
+            background: #fff5f7;
+            font-weight: 600;
+        }
+        
+        .gs-option-icon {
+            font-size: clamp(24px, 5vw, 32px);
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .gs-option-text {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        /* Navigation Buttons */
+        .gs-nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .gs-btn {
+            padding: 16px 28px;
+            border-radius: 10px;
+            font-size: clamp(15px, 3.5vw, 16px);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 130px;
+        }
+        
+        .gs-btn-back {
+            background: var(--gs-light-gray);
+            color: var(--gs-dark);
+        }
+        
+        .gs-btn-back:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+        
+        .gs-btn-next {
+            background: var(--gs-red);
+            color: #fff;
+        }
+        
+        .gs-btn-next:hover:not(:disabled) {
+            background: var(--gs-red-hover);
+            transform: translateY(-1px);
+        }
+        
+        .gs-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Loading State */
+        .gs-loading {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .gs-loading.active {
+            display: block;
+        }
+        
+        .gs-loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--gs-light-gray);
+            border-top-color: var(--gs-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .gs-loading-text {
+            font-size: 18px;
+            color: var(--gs-gray);
+            font-weight: 600;
+        }
+        
+        /* Results */
+        .gs-results-container {
+            display: none;
+            padding: 0px 20px;
+        }
+        
+        .gs-results-container.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .gs-results-header {
+            text-align: center;
+            margin-bottom: 0px;
+        }
+        
+        .gs-results-icon {
+            font-size: 34px;
+            margin-bottom: 5px;
+        }
+        
+        .gs-results-title {
+            font-size: clamp(24px, 5vw, 32px);
+            font-weight: 700;
+            color: var(--gs-dark);
+            margin-bottom: 0px;
+        }
+        
+        .gs-results-subtitle {
+            font-size: clamp(15px, 3.5vw, 17px);
+            color: var(--gs-gray);
+        }
+        
+        .gs-recommendation-card {
+            background: var(--gs-light-gray);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .gs-rec-model {
+            font-size: clamp(20px, 4.5vw, 24px);
+            font-weight: 700;
+            color: var(--gs-red);
+            margin-bottom: 16px;
+        }
+        
+        .gs-rec-features {
+            list-style: none;
+        }
+        
+        .gs-rec-features li {
+            padding: 5px 0;
+            padding-left: 28px;
+            position: relative;
+            font-size: clamp(14px, 3.5vw, 16px);
+            line-height: 1.5;
+        }
+        
+        .gs-rec-features li:before {
+            content: 'âœ…';
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+        
+        /* Pricing Box */
+        .gs-pricing-box {
+            background: #fff;
+            border: 2px solid var(--gs-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .gs-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gs-light-gray);
+        }
+        
+        .gs-price-row:last-child {
+            border-bottom: none;
+        }
+        
+        .gs-price-label {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: var(--gs-gray);
+            flex: 1;
+        }
+        
+        .gs-price-value {
+            font-size: clamp(16px, 4vw, 18px);
+            font-weight: 700;
+            color: var(--gs-dark);
+        }
+        
+        .gs-price-total {
+            border-top: 2px solid var(--gs-dark);
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+        
+        .gs-price-total .gs-price-label,
+        .gs-price-total .gs-price-value {
+            font-size: clamp(18px, 4.5vw, 22px);
+            font-weight: 700;
+            color: var(--gs-dark);
+        }
+        
+        .gs-price-note {
+            font-size: 13px;
+            color: var(--gs-gray);
+            font-style: italic;
+            margin-top: 8px;
+        }
+        
+        /* Why Box */
+        .gs-why-box {
+            background: #F8F9FA;
+            border-left: 4px solid var(--gs-red);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        
+        .gs-why-title {
+            font-size: clamp(16px, 4vw, 18px);
+            font-weight: 700;
+            color: var(--gs-dark);
+            margin-bottom: 12px;
+        }
+        
+        .gs-why-text {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: var(--gs-gray);
+            line-height: 1.6;
+        }
+        
+        /* CTA Buttons */
+        .gs-results-cta {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .gs-cta-primary {
+            background: var(--gs-red);
+            color: #fff;
+            padding: 18px 32px;
+            border-radius: 10px;
+            font-size: clamp(16px, 4vw, 18px);
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: block;
+        }
+        
+        .gs-cta-primary:hover {
+            background: var(--gs-red-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+        }
+        
+        .gs-cta-secondary {
+            background: #fff;
+            color: var(--gs-red);
+            border: 2px solid var(--gs-red);
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: clamp(15px, 3.5vw, 16px);
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: block;
+        }
+        
+        .gs-cta-secondary:hover {
+            background: #fff5f7;
+            transform: translateY(-1px);
+        }
+
+.gs-results-note{
+text-align: center;
+font-size: clamp(13px, 3vw, 14px);
+
+}
+        
+        /* Social Proof */
+        .gs-social-proof {
+            text-align: center;
+            padding: 20px;
+            background: var(--gs-light-gray);
+            border-radius: 8px;
+            font-size: clamp(13px, 3vw, 14px);
+            color: var(--gs-gray);
+            line-height: 1.6;
+        }
+        
+        .gs-social-proof strong {
+            color: var(--gs-dark);
+            font-weight: 700;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px 5px;
+            }
+            
+            .gs-quiz-header {
+                padding: 20px 16px;
+            }
+            
+            .gs-questions-container,
+            .gs-results-container {
+                padding: 24px 16px;
+            }
+            
+            .gs-option {
+                padding: 14px 16px;
+            }
+            
+          /*   .gs-nav-buttons {
+                flex-direction: column;
+            }
+            
+            .gs-btn {
+                width: 100%;
+            }*/
+
+        }
+        
+        @media (max-width: 400px) {
+            .gs-option-icon {
+                min-width: 32px;
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="gs-quiz-container">
+    <!-- Header -->
+    <div class="gs-quiz-header">
+        <h1>Find Your Perfect Stable</h1>
+        <p>Answer 6 quick questions for a personalized recommendation</p>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="gs-progress-container">
+        <div class="gs-progress-label">
+            <span>Question <span id="gs-current-q">1</span> of 6</span>
+            <span id="gs-progress-percent">0%</span>
+        </div>
+        <div class="gs-progress-bar">
+            <div class="gs-progress-fill" id="gs-progress-fill"></div>
+        </div>
+    </div>
+    
+    <!-- Questions Container -->
+    <div class="gs-questions-container" id="gs-questions-container">
+        
+        <!-- Question 1: Starting Point -->
+        <div class="gs-question active" data-question="1">
+            <h2 class="gs-question-title">What's your starting point?</h2>
+            <p class="gs-question-subtitle">This helps us understand your project type</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="new">
+                    <div class="gs-option-icon">ðŸ—ï¸</div>
+                    <div class="gs-option-text">New build - Starting from scratch</div>
+                </div>
+                <div class="gs-option" data-value="retrofit">
+                    <div class="gs-option-icon">ðŸšï¸</div>
+                    <div class="gs-option-text">Retrofit - I have an existing shed/barn</div>
+                </div>
+                <div class="gs-option" data-value="unsure">
+                    <div class="gs-option-icon">â“</div>
+                    <div class="gs-option-text">Not sure yet - Exploring options</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back" disabled>â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Next â†’</button>
+            </div>
+        </div>
+        
+        <!-- Question 2: Number of Horses -->
+        <div class="gs-question" data-question="2">
+            <h2 class="gs-question-title">How many horses?</h2>
+            <p class="gs-question-subtitle">How many horses will this stable accommodate?</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="1">
+                    <div class="gs-option-icon">1ï¸âƒ£</div>
+                    <div class="gs-option-text">One horse</div>
+                </div>
+                <div class="gs-option" data-value="2">
+                    <div class="gs-option-icon">2ï¸âƒ£</div>
+                    <div class="gs-option-text">Two horses</div>
+                </div>
+                <div class="gs-option" data-value="3">
+                    <div class="gs-option-icon">3ï¸âƒ£</div>
+                    <div class="gs-option-text">Three horses</div>
+                </div>
+                <div class="gs-option" data-value="4">
+                    <div class="gs-option-icon">4ï¸âƒ£</div>
+                    <div class="gs-option-text">Four horses</div>
+                </div>
+                <div class="gs-option" data-value="5">
+                    <div class="gs-option-icon">5ï¸âƒ£+</div>
+                    <div class="gs-option-text">Five or more</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back">â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Next â†’</button>
+            </div>
+        </div>
+        
+        <!-- Question 3: Horse Size/Type -->
+        <div class="gs-question" data-question="3">
+            <h2 class="gs-question-title">What size/type are your horses?</h2>
+            <p class="gs-question-subtitle">This helps us recommend the right stable size</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="pony">
+                    <div class="gs-option-icon">ðŸ´</div>
+                    <div class="gs-option-text">Pony (under 14 hands)</div>
+                </div>
+                <div class="gs-option" data-value="standard">
+                    <div class="gs-option-icon">ðŸ´</div>
+                    <div class="gs-option-text">Standard (14-16 hands)</div>
+                </div>
+                <div class="gs-option" data-value="large">
+                    <div class="gs-option-icon">ðŸ´</div>
+                    <div class="gs-option-text">Large/Draft (16+ hands)</div>
+                </div>
+                <div class="gs-option" data-value="maternity">
+                    <div class="gs-option-icon">ðŸ¤°</div>
+                    <div class="gs-option-text">Foaling/Maternity needs</div>
+                </div>
+                <div class="gs-option" data-value="mixed">
+                    <div class="gs-option-icon">ðŸ”€</div>
+                    <div class="gs-option-text">Mixed sizes</div>
+                </div>
+                <div class="gs-option" data-value="unsure">
+                    <div class="gs-option-icon">â“</div>
+                    <div class="gs-option-text">Not sure yet</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back">â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Next â†’</button>
+            </div>
+        </div>
+        
+        <!-- Question 4: Ground Surface -->
+        <div class="gs-question" data-question="4">
+            <h2 class="gs-question-title">What surface will it sit on?</h2>
+            <p class="gs-question-subtitle">This affects anchoring recommendations</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="concrete">
+                    <div class="gs-option-icon">ðŸ—ï¸</div>
+                    <div class="gs-option-text">Concrete slab - Already have it</div>
+                </div>
+                <div class="gs-option" data-value="dirt">
+                    <div class="gs-option-icon">ðŸŸ¤</div>
+                    <div class="gs-option-text">Dirt/Gravel pad - Need to prepare</div>
+                </div>
+                <div class="gs-option" data-value="soft">
+                    <div class="gs-option-icon">ðŸŒ±</div>
+                    <div class="gs-option-text">Grass/Soft ground - Natural surface</div>
+                </div>
+                <div class="gs-option" data-value="undecided">
+                    <div class="gs-option-icon">â“</div>
+                    <div class="gs-option-text">Not decided yet</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back">â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Next â†’</button>
+            </div>
+        </div>
+        
+        <!-- Question 5: Climate -->
+        <div class="gs-question" data-question="5">
+            <h2 class="gs-question-title">What's your biggest climate concern?</h2>
+            <p class="gs-question-subtitle">We'll suggest the right upgrades for your conditions</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="hot">
+                    <div class="gs-option-icon">â˜€ï¸</div>
+                    <div class="gs-option-text">Hot summers - Need maximum airflow</div>
+                </div>
+                <div class="gs-option" data-value="wet">
+                    <div class="gs-option-icon">â˜”</div>
+                    <div class="gs-option-text">Heavy rain - Need weather protection</div>
+                </div>
+                <div class="gs-option" data-value="windy">
+                    <div class="gs-option-icon">ðŸŒ¬ï¸</div>
+                    <div class="gs-option-text">Strong winds - Need solid sides</div>
+                </div>
+                <div class="gs-option" data-value="balanced">
+                    <div class="gs-option-icon">âœ…</div>
+                    <div class="gs-option-text">Mild/Balanced - Standard coverage fine</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back">â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Next â†’</button>
+            </div>
+        </div>
+        
+        <!-- Question 6: Future Plans -->
+        <div class="gs-question" data-question="6">
+            <h2 class="gs-question-title">Planning any additions?</h2>
+            <p class="gs-question-subtitle">This helps with layout recommendations</p>
+            
+            <div class="gs-options">
+                <div class="gs-option" data-value="tack">
+                    <div class="gs-option-icon">ðŸ </div>
+                    <div class="gs-option-text">Yes - Want tack room on the side</div>
+                </div>
+                <div class="gs-option" data-value="wash">
+                    <div class="gs-option-icon">ðŸš¿</div>
+                    <div class="gs-option-text">Yes - Want wash bay attached</div>
+                </div>
+                <div class="gs-option" data-value="both">
+                    <div class="gs-option-icon">ðŸ—ï¸</div>
+                    <div class="gs-option-text">Yes - Want both eventually</div>
+                </div>
+                <div class="gs-option" data-value="no">
+                    <div class="gs-option-icon">âŒ</div>
+                    <div class="gs-option-text">No - Just stables for now</div>
+                </div>
+                <div class="gs-option" data-value="maybe">
+                    <div class="gs-option-icon">â“</div>
+                    <div class="gs-option-text">Maybe later - Not sure yet</div>
+                </div>
+            </div>
+            
+            <div class="gs-nav-buttons">
+                <button class="gs-btn gs-btn-back">â† Back</button>
+                <button class="gs-btn gs-btn-next" disabled>Calculate & Get My Recommendation â†’</button>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Loading State -->
+    <div class="gs-loading" id="gs-loading">
+        <div class="gs-loading-spinner"></div>
+        <p class="gs-loading-text">Calculating your perfect match...</p>
+    </div>
+    
+    <!-- Results Container -->
+    <div class="gs-results-container" id="gs-results-container">
+        <!-- Results will be dynamically inserted here -->
+    </div>
+    
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    // ===== PRICING CONFIG =====
+    const PRICING = {
+        base: {
+            '4x4': { first: 4500, extra: 4000, install: 400, label: '4m Ã— 4m Standard' },
+            '5x4': { first: 6100, extra: 5900, install: 550, label: '5m Ã— 4m Large' },
+            '4x5': { first: 6100, extra: 5900, install: 550, label: '4m Ã— 5m Large' },
+            '5x5': { first: 7800, extra: 6200, install: 650, label: '5m Ã— 5m XL' }
+        },
+        upgrades: {
+            pitchRoof: 250,
+            anchors: 100  // Per bay
+        }
+    };
+    
+    // ===== STATE =====
+    const state = {
+        currentQuestion: 1,
+        totalQuestions: 6,
+        answers: {},
+        recommendation: null
+    };
+    
+    // ===== DOM ELEMENTS =====
+    const els = {
+        questionsContainer: document.getElementById('gs-questions-container'),
+        loading: document.getElementById('gs-loading'),
+        resultsContainer: document.getElementById('gs-results-container'),
+        progressFill: document.getElementById('gs-progress-fill'),
+        currentQ: document.getElementById('gs-current-q'),
+        progressPercent: document.getElementById('gs-progress-percent'),
+        questions: document.querySelectorAll('.gs-question'),
+        allOptions: document.querySelectorAll('.gs-option'),
+        allNextBtns: document.querySelectorAll('.gs-btn-next'),
+        allBackBtns: document.querySelectorAll('.gs-btn-back')
+    };
+    
+    // ===== INITIALIZATION =====
+    function init() {
+        // Option click handlers
+        els.allOptions.forEach(option => {
+            option.addEventListener('click', handleOptionClick);
+        });
+        
+        // Next button handlers
+        els.allNextBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => handleNext(index + 1));
+        });
+        
+        // Back button handlers
+        els.allBackBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => handleBack(index + 1));
+        });
+        
+        updateProgress();
+        trackEvent('quiz_start', 'Engagement', 'Quiz Started', 5);
+    }
+    
+    // ===== OPTION SELECTION =====
+    function handleOptionClick(e) {
+        const option = e.currentTarget;
+        const question = option.closest('.gs-question');
+        const questionNum = parseInt(question.dataset.question);
+        const value = option.dataset.value;
+        
+        // Deselect all options in this question
+        question.querySelectorAll('.gs-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Select this option
+        option.classList.add('selected');
+        
+        // Store answer
+        state.answers[`q${questionNum}`] = value;
+        
+        // Enable next button
+        const nextBtn = question.querySelector('.gs-btn-next');
+        nextBtn.disabled = false;
+        
+        // Track event
+        trackEvent('quiz_q_answered', 'Engagement', `Quiz${questionNum}: ${value}`, 2);
+    }
+    
+    // ===== NAVIGATION =====
+    function handleNext(questionNum) {
+        if (questionNum === 6) {
+            // Last question - show results
+            showResults();
+        } else {
+            // Move to next question
+            state.currentQuestion = questionNum + 1;
+            showQuestion(state.currentQuestion);
+        }
+    }
+    
+    function handleBack(questionNum) {
+        if (questionNum > 1) {
+            state.currentQuestion = questionNum - 1;
+            showQuestion(state.currentQuestion);
+        }
+    }
+    
+    function showQuestion(num) {
+        els.questions.forEach(q => q.classList.remove('active'));
+        const targetQ = document.querySelector(`.gs-question[data-question="${num}"]`);
+        if (targetQ) {
+            targetQ.classList.add('active');
+            
+            // Restore selected option if exists
+            const answer = state.answers[`q${num}`];
+            if (answer) {
+                const option = targetQ.querySelector(`[data-value="${answer}"]`);
+                if (option) option.classList.add('selected');
+                targetQ.querySelector('.gs-btn-next').disabled = false;
+            }
+        }
+        
+        els.currentQ.textContent = num;
+        updateProgress();
+    }
+    
+    function updateProgress() {
+        const progress = (state.currentQuestion / state.totalQuestions) * 100;
+        els.progressFill.style.width = `${progress}%`;
+        els.progressPercent.textContent = Math.round(progress) + '%';
+    }
+    
+    // ===== RECOMMENDATION ENGINE =====
+    function calculateRecommendation() {
+        const ans = state.answers;
+        const rec = {
+            model: '',
+            size: '',
+            bays: 1,
+            basePrice: 0,
+            upgrades: [],
+            totalPrice: 0,
+            features: [],
+            why: '',
+            learnMoreUrl: '',
+            learnMoreTitle: '',
+            quoteUrl: ''
+        };
+        
+        // Determine bays
+        const bayMap = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
+        rec.bays = bayMap[ans.q2] || 1;
+        
+        // Determine size based on horse type
+        if (ans.q3 === 'maternity') {
+            rec.size = '5x5';
+            rec.model = '5x5m XL Maternity Stable';
+            rec.learnMoreTitle = 'XL Maternity Stable';
+            rec.learnMoreUrl = '/stables-base-model-compare#maternity';
+        } else if (ans.q3 === 'large' || ans.q3 === 'mixed') {
+            rec.size = '5x4';
+            rec.model = '5x4m Large Steel Horse Stable';
+            rec.learnMoreTitle = 'Large Steel Horse Stable';
+            rec.learnMoreUrl = '/stables-base-model-compare#large';
+        } else {
+            // pony, standard, or unsure
+            rec.size = '4x4';
+            rec.model = '4x4m Standard Base Model Stable';
+            rec.learnMoreTitle = 'Standard Base Model Stable';
+            rec.learnMoreUrl = '/stables-base-model-compare#standard';
+        }
+        
+        // Multi-bay handling
+        if (rec.bays > 1) {
+            rec.model = `${rec.bays}-Bay Modular Stable System (${rec.size}m each)`;
+            rec.learnMoreTitle = 'Modular Stable System';
+            rec.learnMoreUrl = '/stables/multi-stable-systems';
+        }
+        
+        // Retrofit handling
+        if (ans.q1 === 'retrofit') {
+            rec.learnMoreTitle = 'Shed Retro Fit Stables';
+            rec.learnMoreUrl = '/stables/retrofit-stable-design';
+        }
+        
+        // Calculate base price
+        const sizeConfig = PRICING.base[rec.size];
+        if (rec.bays === 1) {
+            rec.basePrice = sizeConfig.first;
+        } else {
+            rec.basePrice = sizeConfig.first + (sizeConfig.extra * (rec.bays - 1));
+        }
+        rec.totalPrice = rec.basePrice;
+        
+        // Add upgrades based on answers
+        
+        // Anchors for non-concrete surfaces
+        if (ans.q4 === 'dirt' || ans.q4 === 'soft' || ans.q4 === 'undecided') {
+            const anchorCost = PRICING.upgrades.anchors * rec.bays;
+            rec.upgrades.push({
+                name: 'Ground anchors (recommended for stability)',
+                price: anchorCost,
+                included: true
+            });
+            rec.totalPrice += anchorCost;
+        }
+        
+        // Slanted roof for hot climates
+        if (ans.q5 === 'hot') {
+            const roofCost = PRICING.upgrades.pitchRoof * rec.bays;
+            rec.upgrades.push({
+                name: 'Slanted roof upgrade (maximum airflow)',
+                price: roofCost,
+                included: true
+            });
+            rec.totalPrice += roofCost;
+        }
+        
+        // Installation (optional)
+        const installCost = sizeConfig.install * rec.bays;
+        rec.upgrades.push({
+            name: 'Professional installation (optional)',
+            price: installCost,
+            included: false
+        });
+        
+        // Build features list
+        rec.features = [
+            `${rec.bays === 1 ? 'Single' : rec.bays + '-bay'} ${rec.size}m configuration`,
+            'Heavy-duty galvanised steel frame (50x50mm RHS)',
+            'Ply lower panels, mesh upper for ventilation',
+            '2.5m high stalls for airflow and comfort',
+            `Includes ${rec.bays} straight gate${rec.bays > 1 ? 's' : ''}`,
+            ans.q4 === 'concrete' ? 'Concrete ready (dynabolts recommended)' : 'Ground anchor system included'
+        ];
+        
+        // Add tack room advice if applicable
+        if ((ans.q6 === 'tack' || ans.q6 === 'both') && rec.size === '5x4') {
+            rec.features.push('ðŸ’¡ Perfect layout for adding 4m tack room later');
+        }
+        
+        // Generate "why" text
+        rec.why = generateWhyText(ans, rec);
+        
+        // Build quote URL with parameters
+        rec.quoteUrl = buildQuoteUrl(ans, rec);
+        
+        return rec;
+    }
+    
+    function generateWhyText(ans, rec) {
+        let why = `Based on your answers, we recommend `;
+        
+        if (rec.bays === 1) {
+            why += `a single ${rec.size}m stable `;
+        } else {
+            why += `a ${rec.bays}-bay modular system with ${rec.size}m stalls `;
+        }
+        
+        why += 'because ';
+        
+        const reasons = [];
+        
+        // Horse size reasoning
+        if (ans.q3 === 'maternity') {
+            reasons.push('you need extra space for foaling and mare comfort');
+        } else if (ans.q3 === 'large') {
+            reasons.push('your large horses need generous room to prevent stress');
+        } else if (ans.q3 === 'pony') {
+            reasons.push('this size is perfect for ponies - spacious without being excessive');
+        } else if (ans.q3 === 'standard') {
+            reasons.push('this is the ideal size for standard riding horses');
+        }
+        
+        // Climate reasoning
+        if (ans.q5 === 'hot') {
+            reasons.push('we\'ve added the slanted roof for maximum airflow in hot conditions');
+        } else if (ans.q5 === 'wet') {
+            reasons.push('the covered design provides excellent rain protection');
+        }
+        
+        // Surface reasoning
+        if (ans.q4 === 'dirt' || ans.q4 === 'soft') {
+            reasons.push('ground anchors ensure stability on your surface type');
+        }
+        
+        // Retrofit reasoning
+        if (ans.q1 === 'retrofit') {
+            reasons.push('our retrofit system adapts to your existing structure');
+        }
+        
+        // Tack room reasoning
+        if ((ans.q6 === 'tack' || ans.q6 === 'both') && rec.size === '5x4') {
+            reasons.push('the 5m front width is perfect for adding a tack room to the side later');
+        }
+        
+        why += reasons.join(', ') + '.';
+        
+        return why;
+    }
+    
+    function buildQuoteUrl(ans, rec) {
+        const params = new URLSearchParams({
+            size: rec.size,
+            bays: rec.bays,
+            starting: ans.q1,
+            horses: ans.q2,
+            horse_size: ans.q3,
+            surface: ans.q4,
+            climate: ans.q5,
+            additions: ans.q6,
+            anchors: (ans.q4 === 'dirt' || ans.q4 === 'soft' || ans.q4 === 'undecided') ? 'yes' : 'no',
+            roof: ans.q5 === 'hot' ? 'slanted' : 'standard',
+            estimated_price: rec.totalPrice
+        });
+        
+        return `/stables/quote/?${params.toString()}`;
+    }
+    
+    // ===== RESULTS DISPLAY =====
+    function showResults() {
+        els.questionsContainer.style.display = 'none';
+        els.loading.classList.add('active');
+        
+        setTimeout(() => {
+            const rec = calculateRecommendation();
+            state.recommendation = rec;
+            
+            trackEvent('quiz_complete', 'Engagement', `Quiz Completed - ${rec.model}`, 30);
+            
+            renderResults(rec);
+            
+            els.loading.classList.remove('active');
+            els.resultsContainer.classList.add('active');
+            
+            // Scroll to top of results
+            els.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 1800);
+    }
+    
+    function renderResults(rec) {
+        const installCost = PRICING.base[rec.size].install * rec.bays;
+        const totalWithInstall = rec.totalPrice + installCost;
+        
+        const upgradesHtml = rec.upgrades
+            .filter(u => u.included)
+            .map(u => `
+                <div class="gs-price-row">
+                    <span class="gs-price-label">+ ${u.name}</span>
+                    <span class="gs-price-value">$${u.price.toLocaleString()}</span>
+                </div>
+            `).join('');
+        
+        const html = `
+            <div class="gs-results-header">
+                <div class="gs-results-icon">ðŸŽ‰</div>
+                <h2 class="gs-results-title">We Found a Match!</h2>
+                <p class="gs-results-subtitle">Here's your personalized stable recommendation</p>
+            </div>
+            
+            <div class="gs-recommendation-card">
+                <div class="gs-rec-model">${rec.model}</div>
+                <ul class="gs-rec-features">
+                    ${rec.features.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div class="gs-pricing-box">
+                <div class="gs-price-row">
+                    <span class="gs-price-label">Base stable (${rec.bays === 1 ? '1 bay' : rec.bays + ' bays'})</span>
+                    <span class="gs-price-value">$${rec.basePrice.toLocaleString()}</span>
+                </div>
+                ${upgradesHtml}
+                <div class="gs-price-row gs-price-total">
+                    <span class="gs-price-label">Your Estimated Total:</span>
+                    <span class="gs-price-value">$${rec.totalPrice.toLocaleString()}</span>
+                </div>
+                <div class="gs-price-row" style="border-top: 1px dashed var(--gs-border); padding-top: 12px; margin-top: 8px;">
+                    <span class="gs-price-label" style="font-size: 14px; color: var(--gs-gray);">+ Installation (optional)</span>
+                    <span class="gs-price-value" style="font-size: 16px; color: var(--gs-gray);">$${installCost.toLocaleString()}</span>
+                </div>
+                <div class="gs-price-row" style="padding-top: 4px;">
+                    <span class="gs-price-label" style="font-size: 14px; color: var(--gs-gray); opacity: 0.9;">Total Installed:</span>
+                    <span class="gs-price-value" style="font-size: 18px; color: var(--gs-gray);">$${totalWithInstall.toLocaleString()}</span>
+                </div>
+                <p class="gs-price-note">All prices include GST</p>
+            </div>
+            
+            <div class="gs-why-box">
+                <div class="gs-why-title">ðŸ’¡ Why this recommendation?</div>
+                <p class="gs-why-text">${rec.why}</p>
+            </div>
+            
+            <div class="gs-results-cta">
+                <a href="${rec.quoteUrl}" class="gs-cta-primary ga-cta-main">
+                    Continue to My Custom Quote â†’
+                </a>
+<p class="gs-results-note">We have pre-filled your details, just review and submit!</p>
+                <a href="${rec.learnMoreUrl}" class="gs-cta-secondary ga-nav-product">
+                    ðŸ”µ Learn More About ${rec.learnMoreTitle}
+                </a>
+            </div>
+            
+            <div class="gs-social-proof">
+                <strong>&#11088;&#11088;&#11088;&#11088;&#11088; 5.0 rating</strong> Â· 17 reviews (13 Google + 4 Facebook)<br>
+                <strong>60+ stables delivered</strong> in the last 12 months
+
+
+            </div>
+        `;
+        
+        els.resultsContainer.innerHTML = html;
+        
+	// Remove or Keep Results Viewed 
+        //trackEvent('quiz_results_viewed', 'Engagement', `Quiz Results Viewed - ${rec.model}`, 10);
+    }
+    
+    // ===== ANALYTICS TRACKING =====
+    function trackEvent(event, category, label, value) {
+        // GA4
+        if (typeof gtag !== 'undefined') {
+            gtag('event', event, {
+                event_category: category,
+                event_label: label,
+                value: value
+            });
+        }
+        
+        // Universal Analytics
+        if (typeof ga !== 'undefined') {
+            ga('send', 'event', category, event, label, value);
+        }
+        
+        // GTM Data Layer
+        if (typeof dataLayer !== 'undefined') {
+            dataLayer.push({
+                'event': event,
+                'eventCategory': category,
+                'eventLabel': label,
+                'eventValue': value
+            });
+        }
+        
+        console.log('Quiz Event:', { event, category, label, value });
+    }
+    
+    // ===== START QUIZ =====
+    init();
+    
+})();
+</script>
+
+</body>
+</html>
