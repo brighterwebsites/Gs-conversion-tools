@@ -6,7 +6,7 @@
 class GS_Pricing {
 
     public static function init() {
-        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'inject_config' ], 5 );
+        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_config' ], 5 );
     }
 
     public static function get_config() {
@@ -94,14 +94,28 @@ class GS_Pricing {
         ];
     }
 
-    public static function inject_config() {
-        $config = self::get_config();
-        wp_register_script( 'gs-pricing-config', false, [], GS_CT_VERSION, false );
-        wp_enqueue_script( 'gs-pricing-config' );
+    /**
+     * Register the pricing config as a dependency-only handle.
+     *
+     * The calculator and quiz both declare 'gs-pricing-config' as a dependency,
+     * so WordPress pulls it in automatically on pages that use those tools --
+     * and only those pages. It used to be enqueued unconditionally, which
+     * printed the entire price list, including retrofit panel pricing, into the
+     * source of every page on the site.
+     *
+     * Filter 'gs_pricing_config_always' to true if something outside this plugin
+     * needs window.GS_PRICING_CONFIG on pages with no shortcode.
+     */
+    public static function register_config() {
+        wp_register_script( 'gs-pricing-config', false, [], GS_CT_VERSION, true );
         wp_add_inline_script(
             'gs-pricing-config',
-            'window.GS_PRICING_CONFIG = ' . wp_json_encode( $config ) . ';'
+            'window.GS_PRICING_CONFIG = ' . wp_json_encode( self::get_config() ) . ';'
         );
+
+        if ( apply_filters( 'gs_pricing_config_always', false ) ) {
+            wp_enqueue_script( 'gs-pricing-config' );
+        }
     }
 
     // PHP helpers (for use in templates/other PHP code)
