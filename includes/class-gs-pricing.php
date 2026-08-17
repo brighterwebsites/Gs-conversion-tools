@@ -9,6 +9,19 @@ class GS_Pricing {
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_config' ], 5 );
     }
 
+    /**
+     * Everything the front-end tools need, and nothing else.
+     *
+     * This array is published to the browser as window.GS_PRICING_CONFIG, so
+     * anything added here is public. Only 'base' and 'upgrades' are read by the
+     * calculator and quiz; the retrofit, panels, roofExtension, tackRooms,
+     * gstRate, currency, business and notes blocks were dropped because nothing
+     * consumed them -- see git history if any are needed again.
+     *
+     * When the WooCommerce rebuild lands, this is the single place to change:
+     * return prices from the products instead of these literals and the
+     * calculator and quiz JS need no changes at all.
+     */
     public static function get_config() {
         return [
             'base' => [
@@ -49,47 +62,6 @@ class GS_Pricing {
                 'pitchRoof' => 450,
                 'yokeGates' => 750,
                 'anchors'   => 100,
-            ],
-            'panels' => [
-                'ends'     => [ 'four' => 200, 'five' => 200 ],
-                'rear'     => [ 'four' => 200, 'five' => 200 ],
-                'interior' => [ 'four' => 200, 'five' => 200 ],
-            ],
-            'roofExtension' => [
-                'four' => 1200,
-                'five' => 1800,
-            ],
-            'tackRooms' => [
-                '2_5x4' => [ 'label' => '2.5m × 4m', 'price' => 3600, 'depth' => 4 ],
-            ],
-            'retrofit' => [
-                'panelTypes' => [
-                    'pm'     => [ 'label' => 'Ply & Mesh' ],
-                    'pp'     => [ 'label' => 'Full Ply' ],
-                    'open'   => [ 'label' => 'Open Front' ],
-                    'cattle' => [ 'label' => 'Cattle rail' ],
-                ],
-                'panelFront' => [
-                    '4' => [ 'pm' => 1400, 'pp' => 1250, 'open' => 950, 'cattle' => 700 ],
-                    '5' => [ 'pm' => 1800, 'pp' => 2000, 'open' => 1150, 'cattle' => 950 ],
-                ],
-                'panelSideRear' => [
-                    '4' => [ 'pm' => 1100, 'pp' => 1300, 'open' => 950, 'cattle' => 700 ],
-                    '5' => [ 'pm' => 1500, 'pp' => 1700, 'open' => 1150, 'cattle' => 950 ],
-                ],
-            ],
-            'gstRate'  => 0.10,
-            'currency' => 'AUD',
-            'business' => [
-                'name'  => 'Guerilla Steel Stables',
-                'phone' => '0405 639 413',
-                'email' => 'guerillasteel@gmail.com',
-            ],
-            'notes' => [
-                'pricing'  => 'All prices include GST',
-                'delivery' => 'Delivery charges may apply based on location',
-                'custom'   => 'Custom modifications available - contact for quote',
-                'anchors'  => 'Anchors include 4 per bay, even if only 3 needed',
             ],
         ];
     }
