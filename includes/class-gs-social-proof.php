@@ -24,7 +24,9 @@ class GS_Social_Proof {
 
     /** Day-of-month seeded RNG (same value all day, changes daily). */
     private static function daily_rand( $seed, $min, $max ) {
-        $today = (int) date( 'Ymd' );
+        // current_time() honours the site's timezone; date() used the server's,
+        // so the counters rolled over at the wrong hour for an AU site.
+        $today = (int) current_time( 'Ymd' );
         srand( $today + $seed );
         $val = rand( $min, $max );
         srand(); // reset
@@ -32,22 +34,22 @@ class GS_Social_Proof {
     }
 
     public static function monthly_progress( $atts ) {
-        $day    = (int) date( 'j' );
+        $day    = (int) current_time( 'j' );
         $base   = max( 0, $day - 2 );
         $jitter = self::daily_rand( 1001, 0, 3 );
         return (string) min( 28, $base + $jitter );
     }
 
     public static function year_progress( $atts ) {
-        $start_date  = new DateTime( '2024-01-01' );
-        $now         = new DateTime();
+        $start_date  = new DateTime( '2024-01-01', wp_timezone() );
+        $now         = new DateTime( 'now', wp_timezone() );
         $months      = (int) $start_date->diff( $now )->m + ( (int) $start_date->diff( $now )->y * 12 );
         $per_month   = self::daily_rand( 2001, 15, 25 );
         return (string) ( 60 + ( $months * $per_month ) );
     }
 
     public static function usage_count( $atts ) {
-        $day    = (int) date( 'j' );
+        $day    = (int) current_time( 'j' );
         $base   = max( 5, $day * 4 );
         $jitter = self::daily_rand( 3001, 0, 6 );
         return (string) min( 128, $base + $jitter );
@@ -60,7 +62,7 @@ class GS_Social_Proof {
             'id'         => 'dl',
         ], $atts );
 
-        $day     = (int) date( 'j' );
+        $day     = (int) current_time( 'j' );
         $base    = 630;
         $daily   = self::daily_rand( 4001 + (int) $atts['seed_start'], (int) $atts['seed_start'], (int) $atts['seed_end'] );
         $count   = min( 700, $base + ( $day * $daily ) );
