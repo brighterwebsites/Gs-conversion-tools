@@ -15,15 +15,39 @@
         return out;
     }
 
+    var SIZE_KEYS = ['4x4', '5x4', '4x5', '5x5'];
+
+    function bannerMessage(data) {
+        // Only echo values we recognise. Anything else falls back to the generic
+        // wording, so a crafted query string can never reach the banner text.
+        var size = SIZE_KEYS.indexOf(String(data.size || '')) !== -1 ? String(data.size) : '';
+        var bays = /^[1-9][0-9]?$/.test(String(data.bays || '')) ? String(data.bays) : '1';
+
+        return size
+            ? 'We\'ve pre-filled this form with your ' + size + ' ' + bays + '-bay configuration'
+            : 'We\'ve pre-filled this form with your calculator estimate';
+    }
+
     function showBanner(data, form) {
         var banner = document.createElement('div');
         banner.className = 'gs-prefill-banner';
-        var msg = data.size
-            ? 'We\'ve pre-filled this form with your ' + data.size + ' ' + (data.bays || '1') + '-bay configuration'
-            : 'We\'ve pre-filled this form with your calculator estimate';
 
-        banner.innerHTML = '<span class="gs-prefill-banner__icon">✅</span>'
-            + '<span class="gs-prefill-banner__text"><strong>Based on Your Results</strong> — ' + msg + '</span>';
+        var icon = document.createElement('span');
+        icon.className = 'gs-prefill-banner__icon';
+        icon.textContent = '✅';
+
+        var text = document.createElement('span');
+        text.className = 'gs-prefill-banner__text';
+
+        var strong = document.createElement('strong');
+        strong.textContent = 'Based on Your Results';
+        text.appendChild(strong);
+
+        // Built as a text node, never innerHTML: this string carries URL values.
+        text.appendChild(document.createTextNode(' — ' + bannerMessage(data)));
+
+        banner.appendChild(icon);
+        banner.appendChild(text);
 
         form.parentNode.insertBefore(banner, form);
     }
