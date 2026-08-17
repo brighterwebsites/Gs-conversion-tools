@@ -37,8 +37,19 @@
             return '$' + n.toLocaleString('en-AU');
         }
 
+        // Defence in depth alongside esc_url() in the template: the CTA target must
+        // be a site-relative path or an http(s) URL. Anything else (javascript:,
+        // data:, vbscript:) falls back to the default quote page.
+        function safeBase(raw) {
+            var v = String(raw || '').trim();
+            if (v.charAt(0) === '/' || /^https?:\/\//i.test(v)) {
+                return v;
+            }
+            return '/stable-quote/';
+        }
+
         function buildQuoteUrl() {
-            var base = (wrap.dataset.quoteUrl || '/stable-quote/').replace(/\/?$/, '');
+            var base = safeBase(wrap.dataset.quoteUrl).replace(/\/?$/, '');
             var p = new URLSearchParams({
                 size:   sizeEl.value,
                 bays:   baysEl.value,
