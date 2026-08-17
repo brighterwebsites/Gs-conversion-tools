@@ -21,15 +21,21 @@
             '5x5': { first: 7800, extra: 6200, install: 850, label: '5m × 5m XLarge' },
         };
 
-        // Apply shortcode defaults
-        var defSize = wrap.dataset.defaultSize;
-        var defBays = wrap.dataset.defaultBays;
-        if (defSize && sizeEl.querySelector('option[value="' + defSize + '"]')) {
-            sizeEl.value = defSize;
+        // Apply shortcode defaults by comparing option values directly. Building a
+        // selector string from the attribute meant a stray quote in default_size
+        // threw a DOMException and took the whole calculator down.
+        function selectByValue(el, want) {
+            if (!el || !want) return;
+            for (var i = 0; i < el.options.length; i++) {
+                if (el.options[i].value === want) {
+                    el.value = want;
+                    return;
+                }
+            }
         }
-        if (defBays && baysEl.querySelector('option[value="' + defBays + '"]')) {
-            baysEl.value = defBays;
-        }
+
+        selectByValue(sizeEl, wrap.dataset.defaultSize);
+        selectByValue(baysEl, wrap.dataset.defaultBays);
 
         var lastTotal = null;
 
@@ -76,6 +82,7 @@
             var bays    = parseInt(baysEl.value, 10);
             var install = installEl.value === 'yes';
             var p       = pricing[size];
+            if (!p || !bays) return; // unknown size: leave the result panel alone
             var base    = p.first + (p.extra * Math.max(0, bays - 1));
             var instCost = install ? (p.install * bays) : 0;
             var total   = base + instCost;
