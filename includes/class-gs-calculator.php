@@ -13,9 +13,17 @@ class GS_Calculator {
 
     public static function init() {
         add_shortcode( 'gs_stable_calc', [ __CLASS__, 'render' ] );
-        // Keep legacy shortcode name working
-        add_shortcode( 'simple_stable_calc', [ __CLASS__, 'render' ] );
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_assets' ] );
+
+        // Legacy name, claimed late and only if free -- same reasoning as
+        // GS_Social_Proof::register_legacy_shortcodes().
+        add_action( 'init', [ __CLASS__, 'register_legacy_shortcode' ], 20 );
+    }
+
+    public static function register_legacy_shortcode() {
+        if ( ! shortcode_exists( 'simple_stable_calc' ) ) {
+            add_shortcode( 'simple_stable_calc', [ __CLASS__, 'render' ] );
+        }
     }
 
     public static function register_assets() {

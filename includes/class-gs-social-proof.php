@@ -9,17 +9,41 @@
  */
 class GS_Social_Proof {
 
+    /** Old unprefixed names, kept so content migrated from the previous site renders. */
+    const LEGACY_SHORTCODES = [
+        'monthly_progress',
+        'year_progress',
+        'usage_count',
+        'monthly_downloads',
+    ];
+
     public static function init() {
         add_shortcode( 'gs_monthly_progress',  [ __CLASS__, 'monthly_progress' ] );
         add_shortcode( 'gs_year_progress',     [ __CLASS__, 'year_progress' ] );
         add_shortcode( 'gs_usage_count',       [ __CLASS__, 'usage_count' ] );
         add_shortcode( 'gs_monthly_downloads', [ __CLASS__, 'monthly_downloads' ] );
 
-        // Legacy shortcode names
-        add_shortcode( 'monthly_progress',  [ __CLASS__, 'monthly_progress' ] );
-        add_shortcode( 'year_progress',     [ __CLASS__, 'year_progress' ] );
-        add_shortcode( 'usage_count',       [ __CLASS__, 'usage_count' ] );
-        add_shortcode( 'monthly_downloads', [ __CLASS__, 'monthly_downloads' ] );
+        // Late, so other plugins have already claimed anything they want.
+        add_action( 'init', [ __CLASS__, 'register_legacy_shortcodes' ], 20 );
+    }
+
+    /**
+     * Claim the old unprefixed names only if nothing else already has.
+     *
+     * [usage_count] and friends are generic enough that another plugin could
+     * legitimately own them, and add_shortcode() overwrites silently with no
+     * warning. Skipping a name that is already taken means this plugin can
+     * never break someone else's shortcode.
+     *
+     * Once page content is migrated to the gs_ prefixed names, this method and
+     * the LEGACY_SHORTCODES list can be deleted outright.
+     */
+    public static function register_legacy_shortcodes() {
+        foreach ( self::LEGACY_SHORTCODES as $tag ) {
+            if ( ! shortcode_exists( $tag ) ) {
+                add_shortcode( $tag, [ __CLASS__, $tag ] );
+            }
+        }
     }
 
     /** Day-of-month seeded RNG (same value all day, changes daily). */
