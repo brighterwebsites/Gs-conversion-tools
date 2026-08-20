@@ -7,29 +7,93 @@
 (function () {
     'use strict';
 
+    // Only the parameters the quiz and calculator actually produce are carried
+    // into the form. Anything else in the URL is ignored, so a crafted link
+    // cannot stuff arbitrary text into a submitted quote or the email it sends.
+    var ALLOWED_PARAMS = [
+        'source', 'size', 'bays', 'install', 'estimated_price', 'base_price',
+        'install_price', 'starting', 'horses', 'horse_size', 'surface',
+        'climate', 'additions', 'anchors', 'roof', 'addon',
+    ];
+
     function getParams() {
         var out = {};
         new URLSearchParams(window.location.search).forEach(function (v, k) {
-            out[k] = v;
+            if (ALLOWED_PARAMS.indexOf(k) === -1) {
+                return;
+            }
+            // Strip newlines so a value cannot forge extra lines in the summary,
+            // and cap the length -- nothing legitimate here is long.
+            out[k] = String(v).replace(/[\r\n]+/g, ' ').slice(0, 100);
         });
         return out;
+    }
+
+    // Breakdance names its inputs fields[...]. document.querySelector('form')
+    // returns the theme's search form on most pages, so quiz answers were being
+    // attached to search instead of the quote form. Find the real one.
+    function findQuoteForm() {
+        var forms = document.querySelectorAll('form');
+        var i, f;
+
+        // Preferred signal: Breakdance field naming.
+        for (i = 0; i < forms.length; i++) {
+            if (forms[i].querySelector('[name^="fields["]')) {
+                return forms[i];
+            }
+        }
+        // Fallback: any non-search form that collects contact details. Note there
+        // is deliberately no "if there's only one form, use it" fallback -- on a
+        // page whose single form is the theme's search box, that picked search.
+        for (i = 0; i < forms.length; i++) {
+            f = forms[i];
+            if (f.getAttribute('role') === 'search') continue;
+            if (f.querySelector('textarea, input[type="email"]')) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    var SIZE_KEYS = ['4x4', '5x4', '4x5', '5x5'];
+
+    function bannerMessage(data) {
+        // Only echo values we recognise. Anything else falls back to the generic
+        // wording, so a crafted query string can never reach the banner text.
+        var size = SIZE_KEYS.indexOf(String(data.size || '')) !== -1 ? String(data.size) : '';
+        var bays = /^[1-9][0-9]?$/.test(String(data.bays || '')) ? String(data.bays) : '1';
+
+        return size
+            ? 'We\'ve pre-filled this form with your ' + size + ' ' + bays + '-bay configuration'
+            : 'We\'ve pre-filled this form with your calculator estimate';
     }
 
     function showBanner(data, form) {
         var banner = document.createElement('div');
         banner.className = 'gs-prefill-banner';
-        var msg = data.size
-            ? 'We\'ve pre-filled this form with your ' + data.size + ' ' + (data.bays || '1') + '-bay configuration'
-            : 'We\'ve pre-filled this form with your calculator estimate';
 
-        banner.innerHTML = '<span class="gs-prefill-banner__icon">✅</span>'
-            + '<span class="gs-prefill-banner__text"><strong>Based on Your Results</strong> — ' + msg + '</span>';
+        var icon = document.createElement('span');
+        icon.className = 'gs-prefill-banner__icon';
+        icon.textContent = '✅';
+
+        var text = document.createElement('span');
+        text.className = 'gs-prefill-banner__text';
+
+        var strong = document.createElement('strong');
+        strong.textContent = 'Based on Your Results';
+        text.appendChild(strong);
+
+        // Built as a text node, never innerHTML: this string carries URL values.
+        text.appendChild(document.createTextNode(' — ' + bannerMessage(data)));
+
+        banner.appendChild(icon);
+        banner.appendChild(text);
 
         form.parentNode.insertBefore(banner, form);
     }
 
-    function prefillSingleCheckbox(name, targetVal) {
-        var cbs = document.querySelectorAll('input[name="' + name + '"]');
+    function prefillSingleCheckbox(root, name, targetVal) {
+        var cbs = root.querySelectorAll('input[name="' + name + '"]');
         if (!cbs.length) return false;
         var target = String(targetVal).toLowerCase().trim();
         // For model field, map 4x5 → 5x4 (form may not have 4x5 option)
@@ -44,8 +108,8 @@
         return matched;
     }
 
-    function prefillCheckboxArray(name, quizValue) {
-        var cbs = document.querySelectorAll('input[name="' + name + '"]');
+    function prefillCheckboxArray(root, name, quizValue) {
+        var cbs = root.querySelectorAll('input[name="' + name + '"]');
         if (!cbs.length) return;
         var target = String(quizValue).toLowerCase().trim();
         cbs.forEach(function (cb) {
@@ -60,8 +124,8 @@
         });
     }
 
-    function prefillCheckboxByValues(name, csvValues) {
-        var cbs = document.querySelectorAll('input[name="' + name + '"]');
+    function prefillCheckboxByValues(root, name, csvValues) {
+        var cbs = root.querySelectorAll('input[name="' + name + '"]');
         if (!cbs.length) return;
         var vals = String(csvValues || '').split(',').map(function (v) { return v.trim().toLowerCase(); }).filter(Boolean);
         cbs.forEach(function (cb) {
@@ -70,8 +134,8 @@
         });
     }
 
-    function prefillTextarea(sel, value, append) {
-        var el = document.querySelector(sel);
+    function prefillTextarea(root, sel, value, append) {
+        var el = root.querySelector(sel);
         if (!el) return;
         if (append && el.value.trim()) {
             el.value = el.value.trim() + '\n\n' + value;
@@ -81,8 +145,8 @@
         el.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function prefillInput(sel, value) {
-        var el = document.querySelector(sel);
+    function prefillInput(root, sel, value) {
+        var el = root.querySelector(sel);
         if (!el) return;
         el.value = value;
         el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -135,28 +199,27 @@
         });
     }
 
-    function prefill(data) {
+    function prefill(data, form) {
         // Bays
-        if (data.bays) prefillInput('input[name="fields[bays]"]', data.bays);
+        if (data.bays) prefillInput(form, 'input[name="fields[bays]"]', data.bays);
 
         // Model size (single checkbox)
-        if (data.size) prefillSingleCheckbox('fields[model][]', data.size);
+        if (data.size) prefillSingleCheckbox(form, 'fields[model][]', data.size);
 
         // Structure type
-        prefillSingleCheckbox('fields[type][]', data.starting === 'retrofit' ? 'Retrofit' : 'Stable');
+        prefillSingleCheckbox(form, 'fields[type][]', data.starting === 'retrofit' ? 'Retrofit' : 'Stable');
 
         // Add-ons from quiz additions
-        if (data.additions) prefillCheckboxArray('fields[addon][]', data.additions);
+        if (data.additions) prefillCheckboxArray(form, 'fields[addon][]', data.additions);
 
         // Add-ons from explicit addon param (CSV)
-        if (data.addon) prefillCheckboxByValues('fields[addon][]', data.addon);
+        if (data.addon) prefillCheckboxByValues(form, 'fields[addon][]', data.addon);
 
         // Message / notes
-        prefillTextarea('textarea[name="fields[message]"]', buildSummary(data), true);
+        prefillTextarea(form, 'textarea[name="fields[message]"]', buildSummary(data), true);
 
-        // Hidden tracking fields
-        var form = document.querySelector('form');
-        if (form) addHiddenFields(data, form);
+        // Hidden tracking fields -- onto the quote form, not whatever form is first.
+        addHiddenFields(data, form);
     }
 
     function track(event, label, value) {
@@ -175,12 +238,16 @@
         // (PHP already gates loading, but this protects against inline use)
         if (data.source !== 'quiz' && data.source !== 'calculator') return;
 
-        var form = document.querySelector('form');
-        if (form) showBanner(data, form);
+        // No quote form on this page means there is nothing to prefill. Bail out
+        // rather than decorating and stuffing hidden fields into the search form.
+        var form = findQuoteForm();
+        if (!form) return;
+
+        showBanner(data, form);
 
         // Prefill after short delay to let page builder forms fully render
         setTimeout(function () {
-            prefill(data);
+            prefill(data, form);
 
             var label = (data.size && data.bays) ? data.size + ' ' + data.bays + '-bay' : 'quote prefilled';
             var price = parseInt(data.estimated_price, 10) || 0;

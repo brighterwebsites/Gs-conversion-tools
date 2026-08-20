@@ -7,7 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 $default_size = esc_attr( $atts['default_size'] );
 $default_bays = esc_attr( $atts['default_bays'] );
-$quote_url    = esc_attr( $atts['quote_url'] );
+// esc_url(), not esc_attr(): this value becomes an <a href> in JS, and esc_attr()
+// happily passes through a javascript: scheme. Matches what GS_Quiz already does.
+$quote_url    = esc_url( $atts['quote_url'] );
 $show_title   = $atts['show_title'] === 'yes';
 ?>
 <div class="gs-calc"

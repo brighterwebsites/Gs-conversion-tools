@@ -7,8 +7,19 @@
 
     // ── Config ──────────────────────────────────────────────────────────────
     var QUIZ_CFG = window.GS_QUIZ_CONFIG || {};
-    var QUOTE_URL     = QUIZ_CFG.quoteUrl     || '/stables/quote/';
-    var LEARN_MORE_URL = QUIZ_CFG.learnMoreUrl || '/stables-base-model-compare';
+    // Defence in depth. PHP already runs esc_url() over these before handing them
+    // to JS, but they get concatenated into an href inside an innerHTML string,
+    // so the scheme is checked here too rather than trusting the server alone.
+    function safeUrl(raw, fallback) {
+        var v = String(raw == null ? '' : raw).trim();
+        if (v.charAt(0) === '/' || v.charAt(0) === '#' || /^https?:\/\//i.test(v)) {
+            return v.replace(/"/g, '%22').replace(/</g, '%3C').replace(/>/g, '%3E');
+        }
+        return fallback;
+    }
+
+    var QUOTE_URL      = safeUrl(QUIZ_CFG.quoteUrl,     '/stables/quote/');
+    var LEARN_MORE_URL = safeUrl(QUIZ_CFG.learnMoreUrl, '/stables-base-model-compare');
 
     var PC = (window.GS_PRICING_CONFIG && window.GS_PRICING_CONFIG.base) || {
         '4x4': { first: 4500, extra: 4000, install: 550, label: '4m × 4m Standard' },
@@ -301,9 +312,9 @@
             + '</div>'
 
             + '<div class="gs-quiz__ctas">'
-            + '<a href="' + rec.quoteUrl + '" class="gs-quiz__cta-primary js-quiz-cta-quote">Continue to My Custom Quote →</a>'
+            + '<a href="' + safeUrl(rec.quoteUrl, QUOTE_URL) + '" class="gs-quiz__cta-primary js-quiz-cta-quote">Continue to My Custom Quote →</a>'
             + '<p class="gs-quiz__cta-note">We have pre-filled your details — just review and submit!</p>'
-            + '<a href="' + rec.learnMoreUrl + '" class="gs-quiz__cta-secondary js-quiz-cta-learn">🔵 Learn More About ' + rec.learnMoreTitle + '</a>'
+            + '<a href="' + safeUrl(rec.learnMoreUrl, LEARN_MORE_URL) + '" class="gs-quiz__cta-secondary js-quiz-cta-learn">🔵 Learn More About ' + rec.learnMoreTitle + '</a>'
             + '</div>'
 
             + '<div class="gs-quiz__social-proof">'
