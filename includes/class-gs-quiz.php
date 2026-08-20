@@ -32,7 +32,7 @@ class GS_Quiz {
 
     public static function render( $atts ) {
         $atts = shortcode_atts( [
-            'quote_url'      => '/stables/quote/',
+            'quote_url'      => '/quote/',
             'learn_more_url' => '/stables-base-model-compare',
         ], $atts );
 
