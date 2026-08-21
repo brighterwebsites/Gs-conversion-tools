@@ -43,7 +43,7 @@ your content for the tags below before removing.
 |---|---|
 | `[gs_quiz]` | 6-question stable finder with a priced recommendation |
 | `[gs_stable_calc]` | Size + bays + installation price calculator |
-| `[gs_monthly_progress]` | Projects in progress this month |
+| `[gs_monthly_progress]` | Stables built this month, 0 climbing to 25-28 by the 28th |
 | `[gs_year_progress]` | Stables delivered this calendar year, resets 1 Jan |
 | `[gs_usage_count]` | People using the tool this month |
 | `[gs_monthly_downloads]` | Downloads counter with "last X hours ago" |
@@ -81,6 +81,7 @@ another plugin and `add_shortcode()` overwrites silently.
 [gs_quiz quote_url="/stables/quote/" learn_more_url="/stables-base-model-compare"]
 [gs_monthly_downloads seed_start="2" seed_end="10"]
 [gs_year_progress min="5"]
+[gs_monthly_progress min="1"]
 ```
 
 `quote_url` and `learn_more_url` must be a site-relative path or an `http(s)`
@@ -92,6 +93,14 @@ JavaScript.
 Every figure is derived from the date, so the same day always renders the same
 number on every page and every refresh, and nothing is stored.
 
+`[gs_monthly_progress]` climbs from 0 on the 1st to a month-end total of
+**25–28** on the 28th, holding there for days 29–31 in longer months. The
+per-day steps are drawn once for the whole month from a year+month seed and
+normalised against that total, so the figure is non-decreasing by construction
+and the month lands where it should. The curve is skewed low, giving quiet days
+and occasional two-or-three-at-once days rather than a flat one-per-day march.
+Range is the `MONTH_MIN` / `MONTH_MAX` constants.
+
 `[gs_year_progress]` counts the **calendar year** and resets on 1 January. Each
 completed month contributes a figure drawn once from a year+month seed and
 fixed for that month for all time, so the total only ever climbs; the current
@@ -101,8 +110,13 @@ currently **24–28**. That is deliberately just under the ~28 the monthly
 counter settles on, so the year figure reads conservatively: late August lands
 near 200 rather than 224, and a full year near 310.
 
-On 1 January the honest figure is `0`. Use `min="5"` if a bare zero reads badly
+On 1 January the honest figure is `0`, and the monthly counter can render `0`
+on the 1st of any month. Both take a `min` attribute if a bare zero reads badly
 on the day.
+
+Neither counter ever goes backwards. Both previously did: each re-rolled part
+of its figure daily without carrying it forward, so the monthly count could
+slip by up to 2 overnight and the year count by around 300.
 
 Values are derived by hashing the seed, not by `srand()` / `rand()`. The old
 helper seeded the global PRNG and then called bare `srand()` to "reset" it —
@@ -246,6 +260,8 @@ another plugin.
 | `gs_pricing_config_always` | `false` | Publish `window.GS_PRICING_CONFIG` on every page, not only pages using the quiz or calculator |
 | `gs_ct_year_progress` | — | The rendered year-to-date delivery count. Args: `$total`, `$year` |
 | `gs_ct_year_progress_salt` | `gs-stables-delivered` | Reshuffles which rate each month draws, if a year's pattern looks wrong |
+| `gs_ct_monthly_progress` | — | The rendered monthly build count. Args: `$count`, `$day` |
+| `gs_ct_monthly_progress_salt` | `gs-stables-built` | Reshuffles the day-by-day pattern, if a month's sequence looks wrong |
 | `gs_add_to_cart_relabel` | purchasable && in stock | Whether a product's button gets category-aware text. Args: `$relabel`, `$product`, `$context` (`loop` or `single`) |
 | `gs_add_to_cart_loop_template` | `Order this %s` | Shop and archive button wording |
 | `gs_add_to_cart_single_template` | `Get this %s` | Single product button wording |

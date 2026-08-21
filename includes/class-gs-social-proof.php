@@ -2,16 +2,26 @@
 /**
  * Social proof shortcodes — deterministic pseudo-random counters.
  *
- * [gs_monthly_progress]  – Projects in progress this month (0–28)
+ * [gs_monthly_progress]  – Stables built this month (0 → 25-28 across days 1-28)
  * [gs_year_progress]     – Stables delivered this calendar year, resets 1 Jan
  * [gs_usage_count]       – People using the tool this month (5–128)
  * [gs_monthly_downloads] – Downloads counter with "last X hours ago" text
  */
 class GS_Social_Proof {
 
+    /** Days over which [gs_monthly_progress] ramps up. */
+    const BUILD_DAYS = 28;
+
+    /** Month-end total for [gs_monthly_progress] lands in this inclusive range. */
+    const MONTH_MIN = 25;
+    const MONTH_MAX = 28;
+
     /** Per-month delivery rate behind [gs_year_progress], inclusive range. */
     const YEAR_MONTH_MIN = 24;
     const YEAR_MONTH_MAX = 28;
+
+    /** Per-request memo of generated month sequences, keyed "Y-n". */
+    private static $sequences = [];
 
     /** Old unprefixed names, kept so content migrated from the previous site renders. */
     const LEGACY_SHORTCODES = [
@@ -76,11 +86,91 @@ class GS_Social_Proof {
         return $min + (int) floor( $f * ( $max - $min + 1 ) );
     }
 
+    /**
+     * Build the whole month's running total, day 1 through BUILD_DAYS.
+     *
+     * Weights are drawn per day, then normalised against the month target, so
+     * the cumulative total is guaranteed to be non-decreasing and to land
+     * exactly on the target on day BUILD_DAYS. The weight curve is skewed low,
+     * which gives quiet days and occasional two-or-three-at-once days rather
+     * than a flat one-per-day march.
+     *
+     * @return int[] Map of day number => running total.
+     */
+    private static function month_sequence( $year, $month ) {
+        $key = $year . '-' . $month;
+
+        if ( isset( self::$sequences[ $key ] ) ) {
+            return self::$sequences[ $key ];
+        }
+
+        $salt = apply_filters( 'gs_ct_monthly_progress_salt', 'gs-stables-built' );
+        $seed = $salt . '|' . $key;
+
+        // Month target, e.g. 25–28.
+        $span  = self::MONTH_MAX - self::MONTH_MIN + 1;
+        $total = self::MONTH_MIN + (int) floor( self::seeded_float( $seed, 'total' ) * $span );
+
+        // Per-day weights: 0.2–3.0, skewed toward the low end.
+        $weights = [];
+        $sum     = 0.0;
+
+        for ( $day = 1; $day <= self::BUILD_DAYS; $day++ ) {
+            $f               = self::seeded_float( $seed, 'day' . $day );
+            $weights[ $day ] = 0.2 + ( $f * $f * 2.8 );
+            $sum            += $weights[ $day ];
+        }
+
+        // Normalised cumulative → monotone running total.
+        $sequence = [];
+        $running  = 0.0;
+
+        for ( $day = 1; $day <= self::BUILD_DAYS; $day++ ) {
+            $running          = $running + $weights[ $day ];
+            $sequence[ $day ] = (int) floor( ( $running / $sum ) * $total );
+        }
+
+        // Pin the final day exactly, rather than trusting float rounding.
+        $sequence[ self::BUILD_DAYS ] = $total;
+
+        self::$sequences[ $key ] = $sequence;
+
+        return $sequence;
+    }
+
+    /**
+     * Stables built this month.
+     *
+     * Starts at or near zero on the 1st, climbs unevenly, and settles between
+     * MONTH_MIN and MONTH_MAX by the 28th. Months with 29–31 days hold at the
+     * month total for the remaining days.
+     *
+     * The previous version took max(0, day - 2) and added an independently
+     * re-rolled 0–3 jitter each day. Because the jitter was not carried
+     * forward, day 10 could render 8 + 3 = 11 while day 11 rendered 9 + 0 = 9 —
+     * the same going-backwards fault as the year counter, just smaller.
+     *
+     * Attribute: min — display floor, in case a bare "0" reads poorly early in
+     * the month. Defaults to 0.
+     */
     public static function monthly_progress( $atts ) {
-        $day    = (int) current_time( 'j' );
-        $base   = max( 0, $day - 2 );
-        $jitter = self::daily_rand( 1001, 0, 3 );
-        return (string) min( 28, $base + $jitter );
+        $atts = shortcode_atts( [ 'min' => 0 ], $atts, 'gs_monthly_progress' );
+
+        $day   = (int) current_time( 'j' );
+        $year  = (int) current_time( 'Y' );
+        $month = (int) current_time( 'n' );
+
+        $sequence = self::month_sequence( $year, $month );
+        $count    = $sequence[ min( $day, self::BUILD_DAYS ) ];
+        $count    = max( (int) $atts['min'], $count );
+
+        /**
+         * Filter the rendered monthly build count.
+         *
+         * @param int $count Running total for today.
+         * @param int $day   Day of month, site timezone.
+         */
+        return (string) (int) apply_filters( 'gs_ct_monthly_progress', $count, $day );
     }
 
     /**
