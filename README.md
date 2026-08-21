@@ -1,29 +1,37 @@
 # GS Conversion Tools
 
 Quiz, price calculator, quote-form prefill and social-proof counters for
-Guerilla Steel Stables.
+Guerilla Steel Stables, plus the WooCommerce storefront extras: count
+shortcodes, A-Z catalog sorting, and category-aware add-to-cart button text.
 
 ---
 
 ## What this plugin stores
 
-**Nothing.** There is no database footprint at all:
+**Three transients, and nothing else:**
 
 | | |
 |---|---|
 | `wp_options` entries | none |
 | Post meta / user meta | none |
-| Transients | none |
+| Transients | `gs_stats_products`, `gs_stats_orders`, `gs_stats_customers` |
 | Scheduled cron events | none |
 | Custom tables | none |
 | Custom post types / taxonomies | none |
 | Files written to uploads | none |
 
-Every value is calculated on the fly from the date or from the pricing config
-in `includes/class-gs-pricing.php`.
+Every other value is calculated on the fly from the date or from the pricing
+config in `includes/class-gs-pricing.php`.
 
-**To remove the plugin completely, delete the folder.** Nothing is orphaned, and
-no `uninstall.php` is required because there is nothing to clean up.
+The three transients are the cached store counts behind `[gs_prod_count]` and
+friends, held for six hours so a page render never pays for the aggregate
+query. They are invalidated on stock movement, product saves, new or changed
+orders, and user registration. They existed as of v2.1.0; before that the
+plugin wrote nothing at all.
+
+**To remove the plugin completely, delete the folder.** `uninstall.php` deletes
+the three transients on the way out — they would expire within six hours
+anyway — and nothing else is left behind.
 
 The one thing deletion *does* leave behind is shortcodes sitting in page
 content — WordPress prints an unrecognised shortcode as literal text. Search
@@ -39,6 +47,15 @@ your content for the tags below before removing.
 | `[gs_year_progress]` | Stables delivered this year |
 | `[gs_usage_count]` | People using the tool this month |
 | `[gs_monthly_downloads]` | Downloads counter with "last X hours ago" |
+| `[gs_prod_count]` | Published in-stock product count |
+| `[gs_order_count]` | Completed + processing orders |
+| `[gs_customer_count]` | Registered customer accounts |
+| `[gs_product_categories]` | Linked `<div>`s per category, zero-count categories skipped |
+| `[gs_first_product_cat]` | The first product category of the current product |
+
+The last five need WooCommerce. Without it they render as an empty string
+rather than leaving the raw tag printed in the page — see
+[Store shortcodes](#store-shortcodes).
 
 ### Legacy unprefixed names
 
@@ -69,15 +86,132 @@ another plugin and `add_shortcode()` overwrites silently.
 URL. Anything else falls back to the default — this is enforced in both PHP and
 JavaScript.
 
+## Store shortcodes
+
+WooCommerce only. Counts are approximate trust signals, cached for six hours
+and invalidated on stock movement, product changes, new/changed orders and user
+registration. Scope: published, **in stock only** — out-of-stock products are
+excluded.
+
+Without WooCommerce active the counts return an empty string, and the two
+category shortcodes return nothing / their fallback. The tags are always
+registered, so a page never prints `[gs_prod_count]` as literal text.
+
+`[gs_order_count]` is the better trust signal than `[gs_customer_count]`: guest
+checkouts never create a user account, so the customer count undercounts real
+purchasers.
+
+### Rounding
+
+Add `round="10|50|100|1000"` to any count to floor it to a friendly figure and
+append `+`, so the number reads as a claim rather than a live meter:
+
+```
+[gs_prod_count round="10"]     ->  40+
+[gs_order_count round="100"]   ->  3,200+
+```
+
+A value that lands exactly on the step still gets the `+` — exactly 40 products
+with `round="10"` reads "40+". That matches CNS Site Functions, which this was
+ported from. Values at or below the step are printed as-is, so a store with 7
+products shows "7", not "0+".
+
+### Category list
+
+```
+[gs_product_categories]
+[gs_product_categories class="pill" wrap_class="pill-row" show_count="yes"]
+[gs_product_categories parent="15" orderby="count" order="DESC" limit="6"]
+```
+
+`orderby` accepts `name`, `count`, `slug`, `menu_order`; anything else falls
+back to `name`. Defaults are `class="gs-category"` and
+`wrap_class="gs-category-list"`; the plugin ships no CSS for them, style them
+in the theme. Every attribute reaching markup is escaped at output.
+
+### First product category
+
+For single product pages — returns the product's first category.
+
+```
+[gs_first_product_cat]
+[gs_first_product_cat link="yes" class="pill"]
+[gs_first_product_cat exclude="uncategorised,shop"]
+[gs_first_product_cat fallback="Stables"]
+[gs_first_product_cat field="slug"]
+[gs_first_product_cat id="123"]
+```
+
+| Attribute | Default | Notes |
+|---|---|---|
+| `field` | `name` | `name`, `slug`, `id`, or `url` |
+| `link` | `no` | `yes` wraps the label in a link to the category |
+| `class` | — | Class for the link; only used with `link="yes"` |
+| `exclude` | — | Comma separated slugs or IDs to skip, falls through to the next category |
+| `fallback` | — | Text returned when there is no category to show |
+| `orderby` | `default` | `name` sorts alphabetically instead |
+| `id` | current post | Target a specific product |
+
+**"First" means WooCommerce's own order** — the manual term ordering set on the
+category screen, the same order shown in the product editor. It is not
+alphabetical unless you pass `orderby="name"`. If a product sits in both a
+parent and its child, whichever WooCommerce orders first wins; use `exclude=`
+to steer that rather than relying on it.
+
+Anywhere that is not a product — archives, pages, the blog — it returns the
+fallback, which is empty by default. Safe to leave in a shared template.
+
+## Catalog sorting
+
+Adds **Sort by name: A to Z** and **Z to A** to the shop sort dropdown, and
+makes both selectable as the store default in the Customizer (Appearance →
+Customize → WooCommerce → Product Catalog → Default product sorting).
+
+## Add to cart button text
+
+The button names the product's category instead of saying "Add to cart":
+
+| Where | Text |
+|---|---|
+| Shop and archive loops | **Order this** *Stable* |
+| Single product page | **Get this** *Stable* |
+
+The category is `GS_Product_Cat::first_term()` — the same call
+`[gs_first_product_cat]` makes, so the button and any category badge on the
+page can never name different categories. A product in several categories uses
+the first; a product in none falls back to **item** ("Order this item").
+
+Only purchasable, in-stock products are relabelled. WooCommerce says "Read
+more" for a product that cannot be bought and hides the form when it is out of
+stock, and "Order this Stable" over a button that does neither would be a lie.
+External and grouped products report themselves as not purchasable, so their
+own button text is left alone too.
+
+Variable products **are** relabelled, which replaces WooCommerce's "Select
+options" — the button still goes to the product page. Use the
+`gs_add_to_cart_relabel` filter if that hint is worth keeping:
+
+```php
+add_filter( 'gs_add_to_cart_relabel', function ( $relabel, $product ) {
+    return $product->is_type( 'variable' ) ? false : $relabel;
+}, 10, 2 );
+```
+
+Category names are used exactly as entered, so a category called "Stables"
+gives "Order this Stables". Rename the category, or override the wording with
+`gs_add_to_cart_loop_template` / `gs_add_to_cart_single_template`.
+
 ## Everything else it registers
 
 Useful if you ever need to grep for this plugin's footprint in a theme or
 another plugin.
 
 - **Constants** — `GS_CT_VERSION`, `GS_CT_DIR`, `GS_CT_URL`
-- **Classes** — `GS_Pricing`, `GS_Calculator`, `GS_Quiz`, `GS_Prefill`, `GS_Social_Proof`
+- **Classes** — `GS_Pricing`, `GS_Calculator`, `GS_Quiz`, `GS_Prefill`, `GS_Social_Proof`,
+  `GS_Product_Cat`, `GS_Stats`, `GS_Store_Shortcodes`, `GS_Catalog_Sort`, `GS_Cart_Button`
+- **Functions** — `gs_ct_init_store()` (hooked to `plugins_loaded`)
 - **Script / style handles** — `gs-pricing-config`, `gs-calculator`, `gs-quiz`, `gs-prefill`, `gs-tools`
-- **CSS classes** — all prefixed `gs-` (`gs-quiz`, `gs-calc`, `gs-prefill`)
+- **CSS classes** — all prefixed `gs-` (`gs-quiz`, `gs-calc`, `gs-prefill`, `gs-category`, `gs-category-list`)
 - **Global JS** — `window.GS_PRICING_CONFIG`, `window.GS_QUIZ_CONFIG`
 - **URL parameters read** — the 16 listed in `ALLOWED_PARAMS` in `assets/js/gs-prefill.js` (`source`, `size`, `bays`, `install`, `estimated_price`, `base_price`, `install_price`, `starting`, `horses`, `horse_size`, `surface`, `climate`, `additions`, `anchors`, `roof`, `addon`). Anything else in the URL is ignored.
 
@@ -87,6 +221,10 @@ another plugin.
 |---|---|---|
 | `gs_prefill_enabled` | `false` | Force the prefill script to load on a page without `source=quiz` / `source=calculator` in the URL |
 | `gs_pricing_config_always` | `false` | Publish `window.GS_PRICING_CONFIG` on every page, not only pages using the quiz or calculator |
+| `gs_add_to_cart_relabel` | purchasable && in stock | Whether a product's button gets category-aware text. Args: `$relabel`, `$product`, `$context` (`loop` or `single`) |
+| `gs_add_to_cart_loop_template` | `Order this %s` | Shop and archive button wording |
+| `gs_add_to_cart_single_template` | `Get this %s` | Single product button wording |
+| `gs_add_to_cart_fallback_term` | `item` | Word used when the product has no category. Args: `$term`, `$product` |
 
 ## Pricing
 
@@ -117,8 +255,15 @@ calculator and quiz JavaScript need **no changes at all** — they only ever rea
 ## Security notes
 
 The plugin registers **no REST routes, no AJAX actions, no admin pages and no
-admin POST handlers**, and it never touches the database. Its whole surface is
-the shortcodes above plus two `wp_enqueue_scripts` hooks.
+admin POST handlers**. Its whole surface is the shortcodes above, two
+`wp_enqueue_scripts` hooks, and the WooCommerce filters listed under catalog
+sorting and button text.
+
+Database access is read-only and limited to `GS_Stats`: two aggregate `SELECT`s
+against `wc_product_meta_lookup`, a `WP_User_Query` count, and WooCommerce's own
+`wc_orders_count()`. No shortcode attribute or request value reaches any query —
+the only interpolated values are `$wpdb`'s table names, which cannot be
+prepared. Writes are the three cached counts, via `set_transient()`.
 
 Values arriving from the URL are allow-listed, length-capped and inserted as
 text nodes rather than HTML. URLs from shortcode attributes are scheme-checked
@@ -127,3 +272,10 @@ in both PHP and JavaScript. See PR #3 for the full review.
 ## Requirements
 
 WordPress 5.0+, PHP 7.2+. No build step, no dependencies, no lockfile.
+
+WooCommerce is **optional**. The quiz, calculator, prefill and social-proof
+counters work without it; the store shortcodes, catalog sorting and button text
+are skipped when it is not active, checked on `plugins_loaded` so load order
+cannot get it wrong. The product count needs WooCommerce 3.6+ for the
+`wc_product_meta_lookup` table. Order counts are HPOS-compatible — they use
+`wc_orders_count()`, not a posts query.
