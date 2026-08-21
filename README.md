@@ -44,7 +44,7 @@ your content for the tags below before removing.
 | `[gs_quiz]` | 6-question stable finder with a priced recommendation |
 | `[gs_stable_calc]` | Size + bays + installation price calculator |
 | `[gs_monthly_progress]` | Projects in progress this month |
-| `[gs_year_progress]` | Stables delivered this year |
+| `[gs_year_progress]` | Stables delivered this calendar year, resets 1 Jan |
 | `[gs_usage_count]` | People using the tool this month |
 | `[gs_monthly_downloads]` | Downloads counter with "last X hours ago" |
 | `[gs_prod_count]` | Published in-stock product count |
@@ -80,11 +80,34 @@ another plugin and `add_shortcode()` overwrites silently.
 [gs_stable_calc default_size="4x4" default_bays="1" show_title="no" quote_url="/stable-quote/"]
 [gs_quiz quote_url="/stables/quote/" learn_more_url="/stables-base-model-compare"]
 [gs_monthly_downloads seed_start="2" seed_end="10"]
+[gs_year_progress min="5"]
 ```
 
 `quote_url` and `learn_more_url` must be a site-relative path or an `http(s)`
 URL. Anything else falls back to the default — this is enforced in both PHP and
 JavaScript.
+
+### Social proof counters
+
+Every figure is derived from the date, so the same day always renders the same
+number on every page and every refresh, and nothing is stored.
+
+`[gs_year_progress]` counts the **calendar year** and resets on 1 January. Each
+completed month contributes a figure drawn once from a year+month seed and
+fixed for that month for all time, so the total only ever climbs; the current
+month contributes pro rata by day. The per-month rate is the
+`YEAR_MONTH_MIN` / `YEAR_MONTH_MAX` constants in `class-gs-social-proof.php`,
+currently **24–28**. That is deliberately just under the ~28 the monthly
+counter settles on, so the year figure reads conservatively: late August lands
+near 200 rather than 224, and a full year near 310.
+
+On 1 January the honest figure is `0`. Use `min="5"` if a bare zero reads badly
+on the day.
+
+Values are derived by hashing the seed, not by `srand()` / `rand()`. The old
+helper seeded the global PRNG and then called bare `srand()` to "reset" it —
+which reseeds it randomly — disturbing any other code in the same request that
+depended on a seeded sequence.
 
 ## Store shortcodes
 
@@ -221,6 +244,8 @@ another plugin.
 |---|---|---|
 | `gs_prefill_enabled` | `false` | Force the prefill script to load on a page without `source=quiz` / `source=calculator` in the URL |
 | `gs_pricing_config_always` | `false` | Publish `window.GS_PRICING_CONFIG` on every page, not only pages using the quiz or calculator |
+| `gs_ct_year_progress` | — | The rendered year-to-date delivery count. Args: `$total`, `$year` |
+| `gs_ct_year_progress_salt` | `gs-stables-delivered` | Reshuffles which rate each month draws, if a year's pattern looks wrong |
 | `gs_add_to_cart_relabel` | purchasable && in stock | Whether a product's button gets category-aware text. Args: `$relabel`, `$product`, `$context` (`loop` or `single`) |
 | `gs_add_to_cart_loop_template` | `Order this %s` | Shop and archive button wording |
 | `gs_add_to_cart_single_template` | `Get this %s` | Single product button wording |
